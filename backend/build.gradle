@@ -13,12 +13,14 @@ buildscript {
 
 plugins {
     id 'org.springframework.boot' version '2.4.2'
-    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-    id 'java'
+    id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+    id 'idea'
+    id 'maven'
+    id 'java-library'
 }
 
-group = 'com.krokodillLl'
-version = '1.0'
+group 'com.krokodillLl'
+version '1.0'
 
 compileJava {
     options.debug = true
@@ -35,9 +37,10 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '2.4.5'
+    api('org.springframework.boot:spring-boot-starter-web') { exclude module: "spring-boot-starter-logging" }
+    api('org.springframework.boot:spring-boot-starter-web-services') { exclude module: "spring-boot-starter-logging" }
+
+    implementation('org.springframework.boot:spring-boot-starter-log4j2')
 }
 
 test {
@@ -46,8 +49,6 @@ test {
 
 def artifactGroup = group
 def artifactBaseName = 'degree'
-
-jar.dependsOn([':frontend:assemble', 'writeNewPom'])
 
 test {
     useJUnitPlatform()
@@ -69,6 +70,18 @@ bootJar {
     }
     from('../frontend/dist') {
         into 'static'
+    }
+}
+
+task writeNewPom {
+    doLast {
+        pom {
+            project {
+                groupId artifactGroup
+                artifactId artifactBaseName
+                version version
+            }
+        }.writeTo("$buildDir/pom.xml")
     }
 }
 
