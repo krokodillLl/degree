@@ -1,0 +1,75 @@
+buildscript {
+    ext {
+        springBootVersion = '2.4.2'
+    }
+    repositories {
+        maven { url 'https://plugins.gradle.org/m2/' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+
+plugins {
+    id 'org.springframework.boot' version '2.4.2'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'java'
+}
+
+group = 'com.krokodillLl'
+version = '1.0'
+
+compileJava {
+    options.debug = true
+    options.encoding = "UTF-8"
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
+    maven { url 'https://repo.spring.io/snapshot' }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '2.4.5'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+def artifactGroup = group
+def artifactBaseName = 'degree'
+
+jar.dependsOn([':frontend:assemble', 'writeNewPom'])
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+bootJar {
+    archiveFileName = "degree-${version}.jar"
+    manifest {
+        attributes("Implementation-Title": "Gradle",
+                "Implementation-Version": archiveVersion
+        )
+    }
+
+    from("$buildDir/pom.xml") {
+        into "META-INF/maven/$artifactGroup/$artifactBaseName"
+    }
+    from('../frontend/dist') {
+        into 'static'
+    }
+}
+
+bootJar.dependsOn(['jar',':frontend:assemble', 'writeNewPom'])

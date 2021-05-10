@@ -1,0 +1,25 @@
+# Project files & logs
+.gradle/
+.idea/
+*.log
+integration-monitoring-new-frontend.iml
+
+# Frontend related
+frontend/node_modules/
+frontend/dist/
+
+# Backend related
+backend/build/
+backend/conf/mmi.service
+build/
+out/
+archived/
+log4j2-debug.xml
+
+# Development related stuff
+backend/application.properties
+backend/application.yml
+backend/**/application-debug.yml
+backend/_dev/
+frontend/proxy-conf-dev.json
+frontend/runDev.sh
