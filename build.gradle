@@ -37,10 +37,16 @@ repositories {
 }
 
 dependencies {
-    api('org.springframework.boot:spring-boot-starter-web') { exclude module: "spring-boot-starter-logging" }
-    api('org.springframework.boot:spring-boot-starter-web-services') { exclude module: "spring-boot-starter-logging" }
-
-    implementation('org.springframework.boot:spring-boot-starter-log4j2')
+    api('org.springframework.boot:spring-boot-starter-web-services')
+    api('org.springframework.boot:spring-boot-starter-web')
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-websocket', version: '2.4.5'
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.20'
+//    implementation group: 'org.webjars', name: 'bootstrap', version: '5.0.1'
+//    implementation group: 'org.webjars', name: 'mdbootstrap-bootstrap-material-design', version: '4.8.8'
+//    implementation group: 'org.webjars', name: 'jquery', version: '3.6.0'
+//    implementation group: 'org.webjars', name: 'stomp-websocket', version: '2.3.4'
+//    implementation group: 'org.webjars', name: 'sockjs-client', version: '1.5.1'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-thymeleaf', version: '2.4.5'
 }
 
 test {
@@ -68,9 +74,6 @@ bootJar {
     from("$buildDir/pom.xml") {
         into "META-INF/maven/$artifactGroup/$artifactBaseName"
     }
-    from('../frontend/dist') {
-        into 'static'
-    }
 }
 
 task writeNewPom {
@@ -84,5 +87,3 @@ task writeNewPom {
         }.writeTo("$buildDir/pom.xml")
     }
 }
-
-bootJar.dependsOn(['jar',':frontend:assemble', 'writeNewPom'])
