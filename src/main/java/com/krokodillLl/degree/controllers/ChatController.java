@@ -6,6 +6,7 @@ import com.krokodillLl.degree.service.ActiveUserManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
@@ -16,7 +17,7 @@ import javax.annotation.PreDestroy;
 import java.util.Set;
 
 @Controller
-public class WebSocketChatController implements ActiveUserChangeListener {
+public class ChatController implements ActiveUserChangeListener {
 
     @Autowired
     private SimpMessagingTemplate webSocket;
@@ -34,20 +35,21 @@ public class WebSocketChatController implements ActiveUserChangeListener {
         activeUserManager.removeListener(this);
     }
 
-//    @GetMapping("/**")
-//    public String getWebSocketWithSockJs() {
-//        return "index.html";
-//    }
-
     @MessageMapping("/chat")
     public void send(SimpMessageHeaderAccessor sha, @Payload ChatMessage chatMessage) throws Exception {
-        String sender = sha.getUser().getName();
+        String sender = chatMessage.getFrom();
         ChatMessage message = new ChatMessage(chatMessage.getFrom(), chatMessage.getText(), chatMessage.getRecipient());
         if (!sender.equals(chatMessage.getRecipient())) {
             webSocket.convertAndSendToUser(sender, "/queue/messages", message);
         }
 
         webSocket.convertAndSendToUser(chatMessage.getRecipient(), "/queue/messages", message);
+    }
+
+    @MessageMapping("/broadcast")
+    @SendTo("/topic/broadcast")
+    public ChatMessage send(ChatMessage chatMessage) throws Exception {
+        return new ChatMessage(chatMessage.getFrom(), chatMessage.getText(), "ALL");
     }
 
     @Override

@@ -1,0 +1,14 @@
+.about-program:hover {
+    color: #800000;
+    text-decoration: underline;
+    cursor: pointer;
+}
+.about-ref {
+    color: #5a6268;
+    text-decoration: none;
+    cursor: pointer;
+}
+.about-ref:hover {
+    text-decoration: none;
+    cursor: pointer;
+}

@@ -23,3 +23,7 @@ backend/**/application-debug.yml
 backend/_dev/
 frontend/proxy-conf-dev.json
 frontend/runDev.sh
+*.iml
+/target
+*.iws
+bower_components/
