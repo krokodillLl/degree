@@ -15,15 +15,23 @@
     </div>
     <div class="w-50 mx-auto pb-3">
         <div class="input-group">
-            <button type="button" id="login" class="btn btn-sm btn-outline-secondary" ng-click="ctrl.login()"
+            <button type="button" class="btn btn-sm btn-outline-secondary" ng-click="ctrl.login()"
                     ng-disabled="ctrl.isLogin()">
                 Войти
             </button>
-            <input type="text" ng-model="nickname" class="form-control" ng-disabled="ctrl.isLogin()" placeholder="Введите никнейм"/>
-            <button type="button" id="out" class="btn btn-sm btn-outline-secondary" ng-click="ctrl.out()"
+            <input type="text" ng-model="nickname" class="form-control" ng-disabled="ctrl.isLogin()"
+                   placeholder="Введите никнейм"/>
+            <button type="button" class="btn btn-sm btn-outline-secondary" ng-click="ctrl.out()"
                     ng-disabled="!ctrl.isLogin()">
                 Выйти
             </button>
+        </div>
+    </div>
+    <div class="w-50 mx-auto pb-3">
+        <div class="input-group">
+            <p>Ключ будет использоваться для шифрации и дешифрации<br>
+            <input type="text" ng-model="secretKey" class="form-control" ng-disabled="!ctrl.isLogin()"
+                   placeholder="Введите Секретный ключ"/></p>
         </div>
     </div>
     <div class="row">
@@ -31,31 +39,35 @@
             <div class="mb-3">
             </div>
             <div class="mb-3" id="users" ng-if="ctrl.isLogin()">
-                <span id="active-users-span"></span>
-                <ul id="active-users" class="list-group list-group-horizontal-sm">
+                <span ng-if="!ctrl.isUsers()">Нет пользователей онлайн</span>
+                <ul class="list-group list-group-horizontal-sm">
+                    <li ng-repeat="user in ctrl.getUsers()" class="list-group-item">
+                        <a ng-click="ctrl.selectUser(user)"> {{user}}</a>
+                    </li>
                 </ul>
             </div>
-            <div id="divSelectedUser" class="mb-3" style="display: none;">
-                <span id="selectedUser" class="badge badge-secondary"></span> Selected
+            <div class="mb-3" ng-if="ctrl.isUserSelected()">
+                <span class="badge badge-secondary py-3 text-center">Выбран пользователь {{ctrl.getSelectedUser()}}</span>
             </div>
             <div class="mb-3">
-                <div class="input-group" id="sendmessage" ng-if="ctrl.isLogin()">
-                    <input type="text" id="message" class="form-control" placeholder="Message">
+                <div class="input-group" ng-show="ctrl.isLogin()">
+                    <input type="text" ng-model="inputMessage" class="form-control" placeholder="Введите сообщение">
                     <div class="input-group-append">
-                        <button id="send" class="btn btn-primary" onclick="send()">Send</button>
+                        <button class="btn btn-primary" ng-click="ctrl.send()">Отправить</button>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div id="content"></div>
-            <div>
-                <span class="float-right">
-                    <button id="clear" class="btn btn-primary" onclick="clearMessages()"
-                            style="display: none;">Clear</button>
-                </span>
+        <div class="col-md-6" ng-show="ctrl.isMessages()">
+            <div ng-repeat="message in ctrl.getMessages()" class="row alert alert-info">
+                <button class="btn btn-primary" ng-click="ctrl.decrypt(message.text)">Расшифровать</button>
+                <div class="col-md-8" ng-click="">{{message.text}}</div>
+                <div class="col-md-4 text-right"><small>[<b>{{message.from}} пишет {{message.recipient !== 'ALL' ? message.recipient : "всем"}}
+                </b>{{message.time}}]</small></div>
             </div>
-            <div id="response"></div>
+            <span class="float-right">
+                <button class="btn btn-primary" ng-click="ctrl.clearMessages()">Очистить</button>
+            </span>
         </div>
     </div>
 </div>

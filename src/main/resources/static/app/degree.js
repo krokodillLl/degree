@@ -1,6 +1,3 @@
-var socket = null;
-var stompClient = null;
-
 var app = angular.module("degree", []);
 app.controller('degreeController', ['$scope', '$sce', '$http', function ($scope, $sce, $http) {
     $scope.sce = $sce;
@@ -9,10 +6,15 @@ app.controller('degreeController', ['$scope', '$sce', '$http', function ($scope,
         'Вернама. Данный шифр имеет абсолютную криптографическую стойкость, доказанную Клодом Шенноном. Стойкость достигается за счет ' +
         'независимости шифротекстов и открытых ключей в системе.<a/></p>' +
         '<p>Обязатльным условием защищенности является длина ключа, равная или большая чем длина отправляемого сообщения. Также не забывайте про регулярную смену ключа.</p>'
+    var stompClient = null;
     var isAbout = false;
     var isLogin = false;
     $scope.nickname = '';
+    $scope.inputMessage = '';
+    $scope.secretKey = '';
+    var selectedUser = '';
     var messages = [];
+    var users = [];
 
     this.about = function () {
         isAbout = !isAbout;
@@ -24,6 +26,45 @@ app.controller('degreeController', ['$scope', '$sce', '$http', function ($scope,
 
     this.isLogin = function () {
         return isLogin;
+    }
+
+    this.isUsers = function () {
+        return users.length > 0;
+    }
+
+    this.getUsers = function () {
+        if(!users.length > 0) {
+            return users;
+        }
+        let displayUsers = [];
+        users.forEach(function(entry) {
+            displayUsers.push(entry);
+        });
+        return displayUsers;
+    }
+
+    this.selectUser = function (user) {
+        selectedUser = user;
+    }
+
+    this.isUserSelected = function () {
+        return selectedUser !== '';
+    }
+
+    this.getSelectedUser = function () {
+        return selectedUser;
+    }
+
+    this.isMessages = function () {
+        return messages.length > 0;
+    }
+
+    this.getMessages = function () {
+        return messages;
+    }
+
+    $scope.addMessage = function (message) {
+        messages.push(message);
     }
 
     this.login = function () {
@@ -38,26 +79,24 @@ app.controller('degreeController', ['$scope', '$sce', '$http', function ($scope,
                 stompClient = Stomp.over(socket);
                 stompClient.connect({username: $scope.nickname}, function () {
                     stompClient.subscribe('/topic/broadcast', function (output) {
-                        messages.push(JSON.parse(output.body));
-                        // showMessage(createTextNode(JSON.parse(output.body)));
+                        $scope.addMessage(JSON.parse(output.body));
                     });
 
                     stompClient.subscribe('/topic/active', function () {
-                        updateUsers($scope.nickname);
+                        $scope.updateUsers();
                     });
 
                     stompClient.subscribe('/user/queue/messages', function (output) {
-                        messages.push(JSON.parse(output.body));
-                        // showMessage(createTextNode(JSON.parse(output.body)));
+                        $scope.addMessage(JSON.parse(output.body));
                     });
+                    $scope.sendConnection(' в сети');
                 }, function (err) {
                     console.log('error ', err);
                 });
+                isLogin = true;
             }, function (response) {
                 console.log('Oops ', response);
             });
-        this.sendConnection(' connected to server');
-        isLogin = true;
     }
 
     this.out = function () {
@@ -65,7 +104,7 @@ app.controller('degreeController', ['$scope', '$sce', '$http', function ($scope,
             $.post('/degree/user-disconnect',
                 { username: $scope.nickname },
                 function() {
-                    sendConnection(' disconnected from server');
+                    $scope.sendConnection(' вышел');
 
                     stompClient.disconnect(function() {
                         console.log('disconnected...');
@@ -75,116 +114,69 @@ app.controller('degreeController', ['$scope', '$sce', '$http', function ($scope,
         }
     }
 
-    this.sendConnection = function (message) {
+    $scope.sendConnection = function (message) {
         var text = $scope.nickname + message;
         stompClient.send("/app/broadcast", {}, JSON.stringify({'from': 'server', 'text': text}));
 
         // for first time or last time, list active users:
-        updateUsers($scope.nickname);
+        this.updateUsers();
+    }
+
+    $scope.updateUsers = function () {
+        $http.get('/degree/active-users-except/' + $scope.nickname)
+            .then(function(userList) {
+                users = userList.data;
+            }, function(response) {
+                console.log('Oops ', response);
+            });
+    }
+
+    this.send = function () {
+        if (selectedUser === '') {
+            alert('Выберите, кому будет адресовано сообщение');
+            return;
+        }
+
+        let text = this.encryption($scope.inputMessage);
+
+        stompClient.send("/app/chat", {'sender': $scope.nickname},
+            JSON.stringify({'from': $scope.nickname, 'text': text, 'recipient': selectedUser}));
+        $scope.inputMessage = '';
+    }
+
+    this.clearMessages = function () {
+        messages = [];
+    }
+
+    this.encryption = function (text) {
+        if($scope.secretKey !== '') {
+            let result = '';
+            for (let i = 0; i < text.length; i++) {
+                let j = i;
+                if ($scope.secretKey.length <= i) {
+                    j = this.encryptionService(i, $scope.secretKey.length, 1);
+                }
+                result += String.fromCharCode(text.charCodeAt(i) ^ $scope.secretKey.charCodeAt(j));
+            }
+            return result;
+        }
+        else {
+            return text;
+        }
+    }
+
+    this.encryptionService = function (i, length, number) {
+        let result = i - length * number;
+        if(result >= 0 && result < length) {
+            return result;
+        }
+        else {
+            this.encryptionService(i, length, ++number);
+        }
+    }
+
+    this.decrypt = function (message) {
+        alert(this.encryption(message));
     }
 
 }]);
-
-var selectedUser = null;
-var username = null;
-
-function outService() {
-
-}
-
-function send() {
-    var text = $("#message").val();
-    if (selectedUser == null) {
-        alert('Please select a user.');
-        return;
-    }
-    stompClient.send("/app/chat", {'sender': username},
-        JSON.stringify({'from': username, 'text': text, 'recipient': selectedUser}));
-    $("#message").val("");
-}
-
-function createTextNode(messageObj) {
-    var classAlert = 'alert-info';
-    var fromTo = messageObj.from;
-    var addTo = fromTo;
-
-    if (username == messageObj.from) {
-        fromTo = messageObj.recipient;
-        addTo = 'to: ' + fromTo;
-    }
-
-    if (username != messageObj.from && messageObj.from != "server") {
-        classAlert = "alert-warning";
-    }
-
-    if (messageObj.from != "server") {
-        addTo = '<a href="javascript:void(0)" onclick="setSelectedUser(\'' + fromTo + '\')">' + addTo + '</a>'
-    }
-    return '<div class="row alert ' + classAlert + '"><div class="col-md-8">' +
-        messageObj.text +
-        '</div><div class="col-md-4 text-right"><small>[<b>' +
-        addTo +
-        '</b> ' +
-        messageObj.time +
-        ']</small>' +
-        '</div></div>';
-}
-
-function showMessage(message) {
-    $("#content").html($("#content").html() + message);
-    $("#clear").show();
-}
-
-function clearMessages() {
-    $("#content").html("");
-    $("#clear").hide();
-}
-
-function setSelectedUser(username) {
-    selectedUser = username;
-    $("#selectedUser").html(selectedUser);
-    if ($("#selectedUser").html() == "") {
-        $("#divSelectedUser").hide();
-    } else {
-        $("#divSelectedUser").show();
-    }
-}
-
-function updateUsers(username) {
-    // console.log('List of users : ' + userList);
-    var activeUserSpan = $("#active-users-span");
-    var activeUserUL = $("#active-users");
-
-    var index;
-    activeUserUL.html('');
-
-    var url = '/degree/active-users-except/' + username;
-    $.ajax({
-        type: 'GET',
-        url: url,
-        // data: data,
-        dataType: 'json', // ** ensure you add this line **
-        success: function (userList) {
-            if (userList.length == 0) {
-                activeUserSpan.html('<p><i>No active users found.</i></p>');
-            } else {
-                activeUserSpan.html('<p class="text-muted">click on user to begin chat</p>');
-
-                for (index = 0; index < userList.length; ++index) {
-                    if (userList[index] != username) {
-                        activeUserUL.html(activeUserUL.html() + createUserNode(userList[index], index));
-                    }
-                }
-            }
-        },
-        error: function (XMLHttpRequest, textStatus, errorThrown) {
-            alert("error occurred");
-        }
-    });
-}
-
-function createUserNode(username, index) {
-    return '<li class="list-group-item">' +
-        '<a class="active-user" href="javascript:void(0)" onclick="setSelectedUser(\'' + username + '\')">' + username + '</a>' +
-        '</li>';
-}
