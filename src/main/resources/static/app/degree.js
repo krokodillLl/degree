@@ -1,7 +1,7 @@
 var app = angular.module("degree", []);
 app.controller('degreeController', ['$scope', '$sce', '$http', function ($scope, $sce, $http) {
     $scope.sce = $sce;
-    $scope.aboutText = 'Данный чат не записывает сообщения в базу данных, не требует регистрации и имеет функцию шифрования' +
+    $scope.aboutText = 'Данный чат не записывает сообщения в базу данных, не требует регистрации и имеет функцию шифрования.' +
         '<p><a class ="about-ref" href ="https://ru.wikipedia.org/wiki/Шифр_Вернама">Для обеспечения защиты сообщений используется шифр ' +
         'Вернама. Данный шифр имеет абсолютную криптографическую стойкость, доказанную Клодом Шенноном. Стойкость достигается за счет ' +
         'независимости шифротекстов и открытых ключей в системе.<a/></p>' +
@@ -12,6 +12,7 @@ app.controller('degreeController', ['$scope', '$sce', '$http', function ($scope,
     $scope.nickname = '';
     $scope.inputMessage = '';
     $scope.secretKey = '';
+    $scope.serverMessages = true;
     var selectedUser = '';
     var messages = [];
     var users = [];
@@ -59,12 +60,27 @@ app.controller('degreeController', ['$scope', '$sce', '$http', function ($scope,
         return messages.length > 0;
     }
 
+    this.changeServerMessages = function () {
+        $scope.serverMessages = !$scope.serverMessages;
+    }
+
     this.getMessages = function () {
+        if(!$scope.serverMessages) {
+            let msgs = []
+            messages.forEach(function(msg) {
+                if(msg.from !== 'server')
+                    msgs.push(msg);
+            });
+            this.scrollToBottom();
+            return msgs;
+        }
+        this.scrollToBottom();
         return messages;
     }
 
     $scope.addMessage = function (message) {
         messages.push(message);
+        $scope.$digest();
     }
 
     this.login = function () {
@@ -118,7 +134,6 @@ app.controller('degreeController', ['$scope', '$sce', '$http', function ($scope,
         var text = $scope.nickname + message;
         stompClient.send("/app/broadcast", {}, JSON.stringify({'from': 'server', 'text': text}));
 
-        // for first time or last time, list active users:
         this.updateUsers();
     }
 
@@ -179,4 +194,8 @@ app.controller('degreeController', ['$scope', '$sce', '$http', function ($scope,
         alert(this.encryption(message));
     }
 
+    this.scrollToBottom = function () {
+        var div = document.getElementById('messagesDiv');
+        div.scrollTop = div.scrollHeight - div.clientHeight;
+    }
 }]);

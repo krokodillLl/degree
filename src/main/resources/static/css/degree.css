@@ -1,4 +1,4 @@
-.about-program:hover {
+.touch-message:hover {
     color: #800000;
     text-decoration: underline;
     cursor: pointer;
@@ -29,4 +29,24 @@
     text-align: center;
     border-left-width: 1px !important;
     border-top-width: 1px !important;
+}
+
+a:hover {
+    color: #800000;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.bottom-element {
+    bottom: 20px;
+}
+
+.list-group:after {
+    clear: both;
+    display: block;
+    content: "";
+}
+
+.list-group-item {
+    float: left;
 }

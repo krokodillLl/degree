@@ -10,7 +10,7 @@
 <div class="container" ng-app="degree" ng-controller="degreeController as ctrl">
     <div class="py-3 text-center">
         <h2>Передавайте важные сообщения с полной безопасностью</h2>
-        <p class="lead about-program" ng-click="ctrl.about()">Подробнее</p>
+        <p class="lead touch-message" ng-click="ctrl.about()">Подробнее</p>
         <p ng-if="ctrl.isAbout()" ng-bind-html="sce.trustAsHtml(aboutText)"></p>
     </div>
     <div class="w-50 mx-auto pb-3">
@@ -27,54 +27,63 @@
             </button>
         </div>
     </div>
-    <div class="w-50 mx-auto pb-3">
-        <div class="input-group">
-            <p>Ключ будет использоваться для шифрации и дешифрации<br>
-            <input type="text" ng-model="secretKey" class="form-control" ng-disabled="!ctrl.isLogin()"
-                   placeholder="Введите Секретный ключ"/></p>
+    <div class="container pb-3">
+        <div id="users" ng-if="ctrl.isLogin() && !ctrl.isUserSelected()" style="text-align: center">
+            <span class="badge badge-info" ng-if="!ctrl.isUsers()">Нет пользователей онлайн</span>
+            <span class="badge badge-info" ng-if="ctrl.isUsers()">Выберите пользователя, чтобы начать диалог</span>
+            <ul class="list-group list-group-horizontal-sm">
+                <li ng-repeat="user in ctrl.getUsers()" class="list-group-item">
+                    <a ng-click="ctrl.selectUser(user)"> {{user}}</a>
+                </li>
+            </ul>
+        </div>
+        <div style="text-align: center" ng-if="ctrl.isUserSelected()">
+            <span class="badge badge-success py-3 text-center touch-message" ng-click="ctrl.selectUser('')">Выбран пользователь {{ctrl.getSelectedUser()}}</span>
         </div>
     </div>
-    <div class="row">
-        <div class="col-md-6">
-            <div class="mb-3">
+    <div class="container pb-3">
+        <div ng-show="ctrl.isMessages()">
+            <div class="pb-3 text-right">
+                <label class="control checkbox">
+                    <input type="checkbox" id="checkbox" class="control-input" ng-model="serverMessages"
+                           ng-click="ctrl.changeServerMessages()">
+                    <span class="control-label">Сообщения сервера</span>
+                </label>
             </div>
-            <div class="mb-3" id="users" ng-if="ctrl.isLogin()">
-                <span ng-if="!ctrl.isUsers()">Нет пользователей онлайн</span>
-                <ul class="list-group list-group-horizontal-sm">
-                    <li ng-repeat="user in ctrl.getUsers()" class="list-group-item">
-                        <a ng-click="ctrl.selectUser(user)"> {{user}}</a>
-                    </li>
-                </ul>
-            </div>
-            <div class="mb-3" ng-if="ctrl.isUserSelected()">
-                <span class="badge badge-secondary py-3 text-center">Выбран пользователь {{ctrl.getSelectedUser()}}</span>
-            </div>
-            <div class="mb-3">
-                <div class="input-group" ng-show="ctrl.isLogin()">
-                    <input type="text" ng-model="inputMessage" class="form-control" placeholder="Введите сообщение">
-                    <div class="input-group-append">
-                        <button class="btn btn-primary" ng-click="ctrl.send()">Отправить</button>
+            <div style="height: 300px; width: content-box; overflow-y: auto;" id="messagesDiv">
+                <div ng-repeat="message in ctrl.getMessages()" role="alert" class="mx-auto alert"
+                     ng-class="message.from === 'server' ? 'alert-info' : 'alert-secondary' ">
+                    <div class="col-md-12 text-center">{{message.text}}</div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <button class="btn btn-secondary btn-sm text-left" ng-click="ctrl.decrypt(message.text)">
+                                Расшифровать
+                            </button>
+                        </div>
+                        <div class="col-md-8 font-weight-light text-right"><b>{{message.from}}</b> в {{message.time}}
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6" ng-show="ctrl.isMessages()">
-            <div ng-repeat="message in ctrl.getMessages()" class="row alert alert-info">
-                <button class="btn btn-primary" ng-click="ctrl.decrypt(message.text)">Расшифровать</button>
-                <div class="col-md-8" ng-click="">{{message.text}}</div>
-                <div class="col-md-4 text-right"><small>[<b>{{message.from}} пишет {{message.recipient !== 'ALL' ? message.recipient : "всем"}}
-                </b>{{message.time}}]</small></div>
+        <div class="input-group pb-3 fixed-bottom w-75 mx-auto bottom-element" ng-show="ctrl.isLogin()">
+            <input type="text" ng-model="inputMessage" class="form-control" placeholder="Введите сообщение">
+            <div class="input-group-append">
+                <button class="btn btn-sm btn-success" ng-click="ctrl.send()">Отправить</button>
             </div>
-            <span class="float-right">
-                <button class="btn btn-primary" ng-click="ctrl.clearMessages()">Очистить</button>
-            </span>
+            <input type="text" ng-model="secretKey" class="form-control" ng-show="ctrl.isLogin()"
+                   placeholder="Введите Секретный ключ"/>
+            <div class="input-group-append">
+                <button type="button" class="btn btn-sm btn-warning" ng-click="ctrl.clearMessages()">Очистить чат
+                </button>
+            </div>
         </div>
     </div>
+</div>
 </div>
 <script type="text/javascript" src="./bower_components/angular/angular.min.js"></script>
 <script type="text/javascript" src="library/sockjs.js"></script>
 <script type="text/javascript" src="library/stomp.js"></script>
-<script type="text/javascript" src="library/jquery.js"></script>
 <script type="text/javascript" src="app/degree.js"></script>
 </body>
 </html>
