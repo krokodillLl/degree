@@ -16,14 +16,13 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableSimpleBroker("/topic", "/queue");
         config.setApplicationDestinationPrefixes("/app");
-        config.setUserDestinationPrefix("/user");  // this is optional
+        config.setUserDestinationPrefix("/user");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/broadcast");  // this is OK to leave it here
-        // custom heartbeat, every 60 sec
-        registry.addEndpoint("/broadcast").withSockJS().setHeartbeatTime(60_000);
+        registry.addEndpoint("/broadcast");
+        registry.addEndpoint("/broadcast").withSockJS().setHeartbeatTime(10000).setDisconnectDelay(5000);
         registry.addEndpoint("/chat").withSockJS();
     }
 

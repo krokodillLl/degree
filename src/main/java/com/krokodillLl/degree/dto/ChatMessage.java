@@ -1,6 +1,6 @@
 package com.krokodillLl.degree.dto;
 
-import com.krokodillLl.degree.service.StringUtils;
+import com.krokodillLl.degree.service.Utils;
 
 public class ChatMessage {
 
@@ -10,7 +10,7 @@ public class ChatMessage {
     private String time;
 
     public ChatMessage() {
-        this.time = StringUtils.getCurrentTimeStamp();
+        this.time = Utils.getCurrentTimeStamp();
     }
 
     public ChatMessage(String from, String text, String recipient) {
